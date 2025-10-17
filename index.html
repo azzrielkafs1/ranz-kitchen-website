@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RanZ.Kitchen - Premium Food, Harga Bersahabat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style untuk transisi halaman */
+        .page-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Warna latar belakang utama RanZ: Cokelat Gelap */
+        .bg-primary {
+            background-color: #4c301e;
+        }
+        /* Warna aksen RanZ: Emas/Oranye */
+        .text-accent {
+            color: #d97706;
+        }
+        .border-accent {
+            border-color: #d97706;
+        }
+        .bg-card {
+            background-color: #2c1b0f;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-primary text-white">
+
+    <script>
+        // Data path gambar
+        const LOGO_RANZ_URL = "logo.png"; 
+        const SANDWICH_IMG_URL = "sandwich.png";
+        const BROWNIES_IMG_URL = "brownies.jpg"; 
+        const DIMSUM_MENTAI_IMG_URL = "dimsum_mentai.jpg"; 
+        const MACARONI_IMG_URL = "macaroni_brulee.jpg"; 
+        const KOPI_IMG_URL = "kopi.jpg"; 
+
+        const TEAM_MEMBERS = [
+            { name: "Sofyan", role: "CEO & Baker Utama", imgSrc: "sofyan.jpg" },
+            { name: "Azzriel", role: "R&D Menu & Marketing", imgSrc: "azzriel.jpg" },
+            { name: "Rifki", role: "Logistik & Keuangan", imgSrc: "rifki.jpg" },
+        ];
+        
+        const MENU_ITEMS = [
+            // Tambah 'id' untuk memudahkan keranjang
+            { id: 1, name: "Sandwich", desc: "Roti panggang dengan isian keju mozarella, daging premium, dan saus rahasia. Lumer di mulut!", price: 15000, priceFormatted: "Rp 15.000", img: SANDWICH_IMG_URL, category: "Premium" },
+            { id: 2, name: "Fudgy Brownies S", desc: "Brownies padat cokelat Belgia dengan tekstur fudgy yang meleleh.", price: 35000, priceFormatted: "Rp 35.000", img: BROWNIES_IMG_URL, category: "Dessert" },
+            { id: 3, name: "Fudgy Brownies L", desc: "Brownies padat cokelat Belgia dengan tekstur fudgy yang meleleh.", price: 75000, priceFormatted: "Rp 75.000", img: BROWNIES_IMG_URL, category: "Dessert" },
+            { id: 4, name: "Dimsum Mentai Pedas 16pcs", desc: "Dimsum kukus lembut dengan topping saus mentai pedas khas RanZ. Gurih pedas nikmat!", price: 85000, priceFormatted: "Rp 85.000", img: DIMSUM_MENTAI_IMG_URL, category: "Premium" },
+            { id: 5, name: "Macaroni Brulee S", desc: "Macaroni dengan krim keju dan daging sapi panggang. Comfort food terbaik.", price: 25000, priceFormatted: "Rp 25.000", img: MACARONI_IMG_URL, category: "Main Course" },
+            { id: 6, name: "Macaroni Brulee M", desc: "Macaroni dengan krim keju dan daging sapi panggang. Comfort food terbaik.", price: 55000, priceFormatted: "Rp 55.000", img: MACARONI_IMG_URL, category: "Main Course" },
+            { id: 7, name: "Kopi Signature", desc: "Perpaduan biji kopi pilihan khas RanZ. Nikmat panas!", price: 15000, priceFormatted: "Rp 15.000", img: KOPI_IMG_URL, category: "Minuman" },
+        ];
+
+        // Keranjang Belanja
+        let cartItems = JSON.parse(localStorage.getItem('ranz_cart')) || [];
+
+        function saveCart() {
+            localStorage.setItem('ranz_cart', JSON.stringify(cartItems));
+        }
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        }
+
+        function updateCartCounter() {
+            const count = cartItems.reduce((sum, item) => sum + item.qty, 0);
+            const counterElement = document.getElementById('cart-counter');
+            const counterElementMobile = document.getElementById('cart-counter-mobile');
+
+            if (counterElement) {
+                if (count > 0) {
+                    counterElement.textContent = count;
+                    counterElement.classList.remove('hidden');
+                } else {
+                    counterElement.classList.add('hidden');
+                }
+            }
+            if (counterElementMobile) {
+                if (count > 0) {
+                    counterElementMobile.textContent = count;
+                    counterElementMobile.classList.remove('hidden');
+                } else {
+                    counterElementMobile.classList.add('hidden');
+                }
+            }
+        }
+
+        function showMessage(message, type) {
+            const box = document.getElementById('message-box');
+            if (!box) return;
+
+            box.textContent = message;
+            box.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
+
+            if (type === 'success') {
+                box.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                box.classList.add('bg-red-500');
+            } else {
+                box.classList.add('bg-blue-500');
+            }
+
+            box.classList.remove('opacity-0');
+            setTimeout(() => {
+                box.classList.add('opacity-0');
+                setTimeout(() => box.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function addToCart(itemId) {
+            const item = MENU_ITEMS.find(i => i.id === itemId);
+            if (!item) return;
+
+            const existingItem = cartItems.find(i => i.id === itemId);
+
+            if (existingItem) {
+                existingItem.qty += 1;
+            } else {
+                cartItems.push({ 
+                    id: itemId, 
+                    name: item.name, 
+                    price: item.price, 
+                    img: item.img,
+                    qty: 1 
+                });
+            }
+            saveCart();
+            updateCartCounter();
+            showMessage(`${item.name} berhasil ditambahkan ke keranjang.`, 'success');
+        }
+
+        function updateCartItem(itemId, newQty) {
+            const itemIndex = cartItems.findIndex(i => i.id === itemId);
+            if (itemIndex === -1) return;
+
+            if (newQty <= 0) {
+                cartItems.splice(itemIndex, 1);
+            } else {
+                cartItems[itemIndex].qty = newQty;
+            }
+            saveCart();
+            renderCart();
+            updateCartCounter();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const totalElement = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-button');
+
+            if (!container || !totalElement || !checkoutBtn) return;
+
+            if (cartItems.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10">
+                        <p class="text-2xl text-gray-400">Keranjang Anda kosong. Yuk, pilih menu RanZ.Kitchen!</p>
+                        <button onclick="loadPage('menu')" class="mt-4 px-6 py-3 bg-accent text-card font-bold rounded-lg hover:bg-orange-500 transition duration-300">
+                            Lihat Menu
+                        </button>
+                    </div>
+                `;
+                totalElement.textContent = formatRupiah(0);
+                checkoutBtn.disabled = true;
+                return;
+            }
+            
+            checkoutBtn.disabled = false;
+
+            let grandTotal = 0;
+            const itemHtml = cartItems.map(item => {
+                const subtotal = item.price * item.qty;
+                grandTotal += subtotal;
+                return `
+                    <div class="flex items-center justify-between p-4 bg-primary rounded-lg mb-3 shadow-md">
+                        <div class="flex items-center flex-1 min-w-0">
+                            <img src="${item.img}" alt="${item.name}" class="w-16 h-16 object-cover rounded mr-4" onerror="this.onerror=null; this.src='https://placehold.co/64x64/2c1b0f/ffffff?text=IMG';">
+                            <div class="min-w-0">
+                                <h4 class="text-lg font-bold truncate">${item.name}</h4>
+                                <p class="text-sm text-gray-400">${formatRupiah(item.price)}/item</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="updateCartItem(${item.id}, ${item.qty - 1})" class="bg-card text-accent w-8 h-8 rounded hover:bg-orange-800 transition">-</button>
+                            <span class="text-xl font-semibold w-6 text-center">${item.qty}</span>
+                            <button onclick="updateCartItem(${item.id}, ${item.qty + 1})" class="bg-card text-accent w-8 h-8 rounded hover:bg-orange-800 transition">+</button>
+                        </div>
+                        <div class="text-right ml-4 w-28">
+                            <p class="text-lg font-extrabold text-accent">${formatRupiah(subtotal)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = itemHtml;
+            totalElement.textContent = formatRupiah(grandTotal);
+        }
+
+        function downloadStruk(namaPenerima, grandTotal) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let y = 20;
+
+            // Header
+            doc.setFontSize(22);
+            doc.text("RanZ.Kitchen", 105, y, null, null, "center");
+            y += 8;
+            doc.setFontSize(10);
+            doc.text("Premium Food, Harga Bersahabat", 105, y, null, null, "center");
+            y += 10;
+            doc.line(20, y, 190, y); // Garis pemisah
+            y += 8;
+            
+            // Detail Transaksi
+            doc.setFontSize(12);
+            doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 20, y);
+            doc.text(`Penerima: ${namaPenerima}`, 190, y, null, null, "right");
+            y += 8;
+            
+            doc.line(20, y, 190, y); 
+            y += 8;
+
+            // Daftar Item
+            doc.setFontSize(14);
+            doc.text("DETAIL PESANAN", 20, y);
+            y += 8;
+
+            doc.setFontSize(10);
+            cartItems.forEach(item => {
+                const subtotal = item.price * item.qty;
+                doc.text(`${item.name} (${item.qty}x)`, 20, y);
+                doc.text(formatRupiah(subtotal), 190, y, null, null, "right");
+                y += 6;
+            });
+            
+            y += 4;
+            doc.line(20, y, 190, y); 
+            y += 8;
+
+            // Total
+            doc.setFontSize(14);
+            doc.text("TOTAL PEMBAYARAN", 20, y);
+            doc.text(formatRupiah(grandTotal), 190, y, null, null, "right");
+            y += 12;
+
+            // Footer
+            doc.setFontSize(10);
+            doc.text("Terima kasih telah berbelanja di RanZ.Kitchen!", 105, y, null, null, "center");
+            
+            doc.save(`Struk_RanZKitchen_${Date.now()}.pdf`);
+        }
+
+        function checkout() {
+            if (cartItems.length === 0) {
+                showMessage('Keranjang kosong, tidak bisa checkout.', 'error');
+                return;
+            }
+            
+            const total = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const namaPenerima = prompt("Masukkan Nama Anda untuk struk/pemesanan:");
+
+            if (!namaPenerima) {
+                showMessage('Pemesanan dibatalkan.', 'info');
+                return;
+            }
+
+            // Langsung download struk
+            downloadStruk(namaPenerima, total);
+
+            // Bersihkan keranjang setelah checkout (simulasi berhasil)
+            cartItems = [];
+            saveCart();
+            renderCart();
+            updateCartCounter();
+            
+            showMessage('Checkout Berhasil! Struk Anda sudah diunduh. Silakan hubungi WA untuk konfirmasi.', 'success');
+            loadPage('home'); // Kembali ke halaman utama
+        }
+
+        // --- HERO SLIDER LOGIC BARU ---
+        const SLIDER_ITEMS = [
+            { name: "Sandwich", img: SANDWICH_IMG_URL, desc: "Sandwich premium lumer." },
+            { name: "Brownies", img: BROWNIES_IMG_URL, desc: "Brownies Fudgy favorit." },
+            { name: "Dimsum Mentai", img: DIMSUM_MENTAI_IMG_URL, desc: "Dimsum dengan saus mentai pedas." },
+            { name: "Macaroni Brulee", img: MACARONI_IMG_URL, desc: "Macaroni cheesy terbaik." },
+            { name: "Kopi Signature", img: KOPI_IMG_URL, desc: "Kopi signature RanZ." },
+        ];
+
+        let currentSlide = 0;
+        let sliderInterval;
+
+        function startHeroSlider() {
+            const container = document.getElementById('hero-slider-container');
+            if (!container) return;
+
+            // Hapus isi lama (termasuk "LOADING MENU...")
+            container.innerHTML = ''; 
+
+            // Sisipkan semua gambar ke dalam container
+            container.innerHTML = SLIDER_ITEMS.map((item, index) => `
+                <img 
+                    src="${item.img}" 
+                    alt="${item.name}" 
+                    data-slide-index="${index}"
+                    class="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === 0 ? 'opacity-100' : 'opacity-0'}"
+                    onerror="this.onerror=null; this.src='https://placehold.co/400x400/2c1b0f/ffffff?text=${item.name.toUpperCase()}';"
+                />
+            `).join('');
+
+            const images = container.querySelectorAll('img');
+
+            const nextSlide = () => {
+                // Sembunyikan slide saat ini
+                images[currentSlide].classList.remove('opacity-100');
+                images[currentSlide].classList.add('opacity-0');
+
+                // Pindah ke slide berikutnya
+                currentSlide = (currentSlide + 1) % SLIDER_ITEMS.length;
+
+                // Tampilkan slide berikutnya
+                images[currentSlide].classList.remove('opacity-0');
+                images[currentSlide].classList.add('opacity-100');
+            };
+
+            // Atur interval slider
+            if (sliderInterval) clearInterval(sliderInterval);
+            sliderInterval = setInterval(nextSlide, 5000); // Ganti setiap 5 detik
+        }
+        
+        // --- WHATSAPP FORWARD LOGIC BARU DAN LENGKAP ---
+// --- WHATSAPP FORWARD LOGIC FINAL ---
+// --- WHATSAPP FORWARD LOGIC FINAL & TERPERCAYA ---
+function forwardToWhatsApp() {
+    // 1. Ambil Nilai dari Kolom Input
+    const name = document.getElementById('name').value;
+    const notelp = document.getElementById('notelp').value;
+    const email = document.getElementById('email').value;
+    const message = document.getElementById('message').value;
+    const address = document.getElementById('address').value;
+
+    // 2. Cek validasi
+    if (!name || !notelp || !email || !message || !address) {
+        showMessage('Harap lengkapi semua kolom formulir pemesanan/kontak.', 'error');
+        return;
+    }
+
+    // 3. Tentukan Nomor Admin
+    const waNumber = '62895417725986'; 
+    
+    // 4. Buat Isi Pesan (Template)
+    // Gunakan karakter \n (backslash n) untuk Baris Baru di JavaScript
+    let whatsappMessage = `*PESANAN BARU* (via RanZ.Kitchen Website)\n\n`;
+    whatsappMessage += `Halo Rifki Admin RanZ.Kitchen. Saya ingin melakukan pemesanan/menghubungi Anda.\n\n`;
+    
+    // Detail Kontak
+    whatsappMessage += `*Detail Kontak Pelanggan:*\n`;
+    whatsappMessage += `Nama: ${name}\n`;
+    whatsappMessage += `No. HP/WA: ${notelp}\n`;
+    whatsappMessage += `Email: ${email}\n\n`;
+    
+    // Detail Alamat
+    whatsappMessage += `*ALAMAT PENGANTARAN:*\n`;
+    whatsappMessage += `${address}\n\n`; 
+    
+    // Detail Pesanan/Pesan
+    whatsappMessage += `*Isi Pesanan/Pesan:*\n`;
+    whatsappMessage += `${message}\n\n`; 
+    
+    whatsappMessage += `Mohon konfirmasi dan proses pesanan ini. Terima kasih.`;
+    
+    // 5. Ubah Pesan menjadi format URL-safe (URL Encode)
+    // Cukup panggil encodeURIComponent sekali, dan ganti \n dengan %0A untuk Baris Baru
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    
+    // Mengganti semua karakter %0A menjadi \n di WhatsApp (jika diperlukan)
+    // Namun, untuk URL, kita harus menjaga %0A, jadi kita hanya perlu memastikan formatnya benar.
+
+    // 6. Buat Tautan WhatsApp
+    const waLink = `https://wa.me/${waNumber}?text=${encodedMessage}`;
+
+    // 7. Arahkan Pengguna ke WhatsApp
+    window.open(waLink, '_blank');
+    
+    // Opsional: berikan pesan sukses di website
+    showMessage('Pesan Anda telah diteruskan ke WhatsApp Admin. Silakan Kirim!', 'success');
+    
+    // Bersihkan formulir
+    document.querySelector('#kontak form').reset();
+}
+// --- AKHIR DARI WHATSAPP FORWARD LOGIC FINAL & TERPERCAYA ---
+        // Memuat konten tim dan menu ke dalam HTML setelah DOM siap
+        document.addEventListener('DOMContentLoaded', () => {
+            const teamContainer = document.getElementById('team-container');
+            if (teamContainer) {
+                teamContainer.innerHTML = TEAM_MEMBERS.map(member => `
+                    <div class="bg-card p-6 rounded-xl shadow-2xl border border-orange-500/30 transform hover:translate-y-[-5px] transition duration-300">
+                        <img 
+                            src="${member.imgSrc}" 
+                            alt="${member.name}" 
+                            class="w-32 h-32 object-cover rounded-full mx-auto mb-4 border-4 border-accent"
+                            onerror="this.onerror=null; this.src='https://placehold.co/150x150/d97706/ffffff?text=${member.name.substring(0, 1)}';"
+                        />
+                        <h3 class="text-xl font-bold text-orange-300">${member.name}</h3>
+                        <p class="text-sm text-gray-400">${member.role}</p>
+                    </div>
+                `).join('');
+            }
+
+            const menuContainer = document.getElementById('menu-container');
+            if (menuContainer) {
+                menuContainer.innerHTML = MENU_ITEMS.map(item => `
+                    <div class="bg-card p-6 rounded-xl shadow-xl border border-gray-700/50 hover:border-accent transition duration-300 group">
+                        <img 
+                            src="${item.img}" 
+                            alt="${item.name}" 
+                            class="w-full h-48 object-cover rounded-lg mb-4 transform group-hover:scale-[1.03] transition duration-300"
+                            onerror="this.onerror=null; this.src='https://placehold.co/300x200/1e293b/ffffff?text=${item.name}';">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-accent">${item.category}</span>
+                        <h3 class="text-2xl font-bold text-white mt-1">${item.name}</h3>
+                        <p class="text-gray-400 mt-2 text-sm">${item.desc}</p>
+                        <p class="text-3xl font-black mt-4 text-accent">${item.priceFormatted}</p>
+                        <button onclick="addToCart(${item.id})" class="mt-4 w-full py-2 bg-accent text-card font-bold rounded-lg hover:bg-orange-500 transition duration-300">
+                            Tambah ke Keranjang
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            // Panggil fungsi slider dan counter setelah DOM siap
+            startHeroSlider(); 
+            updateCartCounter();
+        });
+    </script>
+
+    <header class="sticky top-0 z-50 bg-card text-white py-4 shadow-xl border-b border-orange-400/20">
+        <div class="container mx-auto flex justify-between items-center px-4 md:px-6">
+            <a href="#home" class="flex items-center space-x-3 group" onclick="loadPage('home')" aria-label="Beranda RanZ Kitchen">
+                <img id="logo-header" src="logo.png" alt="RanZ.Kitchen Logo" 
+                     class="w-10 h-10 rounded-full object-cover shadow-lg"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/d97706/ffffff?text=R';">
+                <h1 class="text-2xl font-bold tracking-wide group-hover:text-accent transition-colors">RanZ.Kitchen</h1>
+            </a>
+
+            <nav id="main-nav" class="hidden md:flex space-x-8 text-lg font-medium">
+                <a href="#home" class="nav-link hover:text-accent transition-colors" data-page="home">Beranda</a>
+                <a href="#about" class="nav-link hover:text-accent transition-colors" data-page="about">Tentang Kami</a>
+                <a href="#menu" class="nav-link hover:text-accent transition-colors" data-page="menu">Menu</a>
+                <a href="#kontak" class="nav-link hover:text-accent transition-colors" data-page="kontak">Kontak</a>
+                <a href="#cart" onclick="loadPage('cart'); renderCart();" class="nav-link relative hover:text-accent transition-colors" data-page="cart" aria-label="Keranjang Belanja">
+                    Keranjang
+                    <span id="cart-counter" class="absolute -top-2 -right-4 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
+                </a>
+            </nav>
+            
+            <button id="mobile-menu-btn" class="md:hidden text-white hover:text-accent transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        
+        <div id="mobile-menu" class="md:hidden absolute top-full left-0 w-full bg-card shadow-xl hidden">
+            <nav class="flex flex-col space-y-2 p-4 text-center">
+                <a href="#home" class="nav-link block py-2 hover:bg-primary transition-colors rounded" data-page="home">Beranda</a>
+                <a href="#about" class="nav-link block py-2 hover:bg-primary transition-colors rounded" data-page="about">Tentang Kami</a>
+                <a href="#menu" class="nav-link block py-2 hover:bg-primary transition-colors rounded" data-page="menu">Menu</a>
+                <a href="#kontak" class="nav-link block py-2 hover:bg-primary transition-colors rounded" data-page="kontak">Kontak</a>
+                <a href="#cart" onclick="loadPage('cart'); renderCart();" class="nav-link relative block py-2 hover:bg-primary transition-colors rounded" data-page="cart">
+                    Keranjang 
+                    <span id="cart-counter-mobile" class="absolute right-1/4 top-1/2 -mt-2 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+    
+    <main id="app-content" class="flex-1">
+        
+        <section id="home" class="page-content min-h-[calc(100vh-80px)] pt-16">
+            <div class="grid md:grid-cols-2 gap-12 items-center container mx-auto px-4 md:px-6 py-20">
+                <div class="text-center md:text-left">
+                    <p class="text-lg font-semibold uppercase tracking-widest text-accent mb-3">RanZ.Kitchen</p>
+                    <h1 class="text-6xl md:text-7xl font-black mb-6 leading-tight">
+                        Citarasa Premium, <span class="text-accent">Harga Bersahabat.</span>
+                    </h1>
+                    <p class="text-xl max-w-lg mx-auto md:mx-0 text-gray-300 mb-8">
+                        Kami menyajikan hidangan dengan bahan baku terbaik, diracik dengan cinta, cocok untuk semua kalangan.
+                    </p>
+                    <button onclick="loadPage('cart'); renderCart();" class="inline-block px-10 py-4 bg-green-500 text-card text-xl font-bold rounded-full shadow-2xl transition duration-300 transform hover:scale-105 hover:bg-green-600">
+                        Order Sekarang! 🛒
+                    </button>
+                </div>
+                <div class="relative flex justify-center w-full max-w-md h-96 mx-auto">
+                    <div id="hero-slider-container" class="w-full h-full rounded-3xl shadow-[0_20px_50px_rgba(217,119,6,0.5)] border-4 border-accent overflow-hidden relative">
+                        </div>
+                </div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 py-16">
+                <h2 class="text-4xl font-black text-center mb-12">Kenapa Memilih RanZ.Kitchen?</h2>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-card p-8 rounded-xl shadow-xl border border-gray-700/50">
+                        <p class="text-5xl mb-4">🏆</p>
+                        <h3 class="text-xl font-bold text-accent mb-2">Bahan Baku Terbaik</h3>
+                        <p class="text-gray-400">Kami hanya menggunakan bahan premium yang segar dan higienis.</p>
+                    </div>
+                    <div class="bg-card p-8 rounded-xl shadow-xl border border-gray-700/50">
+                        <p class="text-5xl mb-4">🔥</p>
+                        <h3 class="text-xl font-bold text-accent mb-2">Inovasi Rasa</h3>
+                        <p class="text-gray-400">Menu unik yang selalu viral dan disukai oleh anak muda.</p>
+                    </div>
+                    <div class="bg-card p-8 rounded-xl shadow-xl border border-gray-700/50">
+                        <p class="text-5xl mb-4">💰</p>
+                        <h3 class="text-xl font-bold text-accent mb-2">Harga Terjangkau</h3>
+                        <p class="text-gray-400">Kualitas premium tidak harus mahal. Buktikan sendiri!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="page-content pt-16">
+            <div class="py-24 md:py-32 flex flex-col items-center justify-center bg-card border-b border-orange-400/30">
+                <div class="container mx-auto px-4 md:px-6 text-center max-w-4xl">
+                    <p class="text-sm font-semibold uppercase tracking-widest text-accent mb-3">TENTANG KAMI</p>
+                    <img id="logo-hero-about" src="logo.png" alt="RanZ.Kitchen Logo" 
+                         class="w-24 h-24 mx-auto mb-6 rounded-full object-cover shadow-2xl border-4 border-accent"
+                         onerror="this.onerror=null; this.src='https://placehold.co/96x96/d97706/ffffff?text=LOGO';">
+                    <h1 class="text-5xl md:text-6xl font-black mb-6">Inilah RanZ.Kitchen</h1>
+                    <p class="text-xl max-w-3xl mx-auto text-gray-300 font-light leading-relaxed">
+                        RanZ.Kitchen lahir dari semangat dan kolaborasi tugas tiga sahabat. Kini berkembang menjadi usaha kuliner rumahan yang digemari anak muda hingga dewasa.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 max-w-6xl mt-16">
+                <section class="grid md:grid-cols-2 gap-8 md:gap-12 mb-20">
+                    <div class="bg-card p-8 md:p-10 rounded-xl shadow-2xl border border-orange-500/30">
+                        <h2 class="text-3xl font-extrabold text-accent mb-4 flex items-center"><span class="text-4xl mr-3">💡</span> Visi Kami</h2>
+                        <p class="text-gray-200 text-lg leading-relaxed">Menjadi merek kuliner rumahan terkemuka yang inovatif dan selalu menjadi pilihan pertama bagi generasi muda.</p>
+                    </div>
+                    <div class="bg-card p-8 md:p-10 rounded-xl shadow-2xl border border-orange-500/30">
+                        <h2 class="text-3xl font-extrabold text-accent mb-4 flex items-center"><span class="text-4xl mr-3">🎯</span> Misi Kami</h2>
+                        <ul class="list-none text-gray-200 text-lg space-y-2 ml-0">
+                            <li><span class="text-accent mr-2">✓</span> Menyediakan hidangan higienis dan bahan baku terbaik.</li>
+                            <li><span class="text-accent mr-2">✓</span> Terus berinovasi menciptakan menu unik dan viral.</li>
+                            <li><span class="text-accent mr-2">✓</span> Memberikan pelayanan terbaik dan pengiriman cepat.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="text-center mb-20">
+                    <h2 class="text-4xl font-black text-white mb-10">Tim Di Balik RanZ.Kitchen</h2>
+                    <div id="team-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                        </div>
+                </section>
+            </div>
+        </section>
+
+        <section id="menu" class="page-content pt-16">
+            <div class="container mx-auto px-4 md:px-6 py-16">
+                <div class="text-center mb-12">
+                    <p class="text-lg font-semibold uppercase tracking-widest text-accent mb-2">Ragam Pilihan</p>
+                    <h1 class="text-5xl md:text-6xl font-black">Menu Andalan Kami</h1>
+                    <p class="text-lg text-gray-300 mt-4 max-w-3xl mx-auto">Klik "Tambah ke Keranjang" dan Checkout untuk pemesanan cepat!</p>
+                </div>
+                
+                <div id="menu-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    </div>
+                
+                <div class="text-center mt-16">
+                    <button onclick="loadPage('cart'); renderCart();" class="px-8 py-3 border-2 border-green-500 text-green-500 font-semibold rounded-full hover:bg-green-500 hover:text-white transition duration-300">
+                        Lihat Keranjang Saya
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="cart" class="page-content pt-16">
+            <div class="container mx-auto px-4 md:px-6 py-16 max-w-4xl">
+                <h1 class="text-5xl md:text-6xl font-black text-center mb-12">Keranjang Belanja 🛒</h1>
+                
+                <div id="cart-content" class="bg-card p-6 rounded-xl shadow-2xl border border-orange-500/30">
+                    <div id="cart-items-container" class="mb-6">
+                        </div>
+                    
+                    <div class="pt-4 border-t border-gray-700/50">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold">Grand Total:</h3>
+                            <span id="cart-total" class="text-3xl font-black text-accent">Rp 0</span>
+                        </div>
+                        
+                        <button id="checkout-button" onclick="checkout()" disabled class="w-full py-4 bg-accent text-card text-xl font-bold rounded-lg shadow-xl hover:bg-orange-500 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Checkout & Download Struk
+                        </button>
+
+                        <p class="text-center text-sm text-gray-400 mt-4">
+                            *Checkout ini mensimulasikan pemesanan. Struk akan otomatis terunduh dalam format PDF.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="kontak" class="page-content pt-16">
+            <div class="container mx-auto px-4 md:px-6 py-16">
+                <div class="text-center mb-12">
+                    <h1 class="text-5xl md:text-6xl font-black">Hubungi Kami</h1>
+                    <p class="text-lg text-gray-300 mt-4">Kami siap melayani pesanan Anda setiap hari.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div class="md:col-span-1 space-y-8 p-6 bg-card rounded-xl shadow-2xl border border-gray-700/50">
+                        <div>
+                            <h3 class="text-2xl font-bold text-accent mb-2">Lokasi</h3>
+                            <p class="text-gray-300">Jl.Hj.Jayun Bekasi Timur (Dapur Utama RanZ.Kitchen)</p>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-accent mb-2">Telepon/WA</h3>
+                            <p class="text-gray-300">+62 895-4177-25986 / rifki admin</p>
+                            <a href="https://wa.me/62895417725986" target="_blank" class="text-green-500 hover:text-green-400 transition-colors flex items-center mt-2">
+                                <img src="logoWhatsApp.png" alt="WhatsApp Logo" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/32x32/4c301e/ffffff?text=IG';">
+                                Chat via WhatsApp
+                            </a>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-accent mb-2">Jam Operasional</h3>
+                            <p class="text-gray-300">Senin - Sabtu: 09:00 - 20:00 WIB</p>
+                            <p class="text-gray-300">Minggu: Tutup</p>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2 p-8 bg-card rounded-xl shadow-2xl border border-gray-700/50">
+    <form onsubmit="event.preventDefault(); forwardToWhatsApp();" class="space-y-4">
+        <h3 class="text-2xl font-bold text-accent mb-4">Kirim Pesan (via WhatsApp)</h3>
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-400">Nama Lengkap</label>
+            <input type="text" id="name" required class="mt-1 w-full p-3 bg-primary border border-gray-700 rounded-lg focus:ring-accent focus:border-accent">
+        </div>
+        <div>
+            <label for="notelp" class="block text-sm font-medium text-gray-400">Nomor Telepon</label>
+            <input type="text" id="notelp" required class="mt-1 w-full p-3 bg-primary border border-gray-700 rounded-lg focus:ring-accent focus:border-accent">
+        </div>
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-400">Email</label>
+            <input type="email" id="email" required class="mt-1 w-full p-3 bg-primary border border-gray-700 rounded-lg focus:ring-accent focus:border-accent">
+        </div>
+        <div>
+            <label for="message" class="block text-sm font-medium text-gray-400">Pesanan Anda</label>
+            <textarea id="message" rows="4" required class="mt-1 w-full p-3 bg-primary border border-gray-700 rounded-lg focus:ring-accent focus:border-accent"></textarea>
+        </div>
+        <div>
+            <label for="address" class="block text-sm font-medium text-gray-400">Alamat Pengantaran</label>
+            <textarea id="address" rows="4" required class="mt-1 w-full p-3 bg-primary border border-gray-700 rounded-lg focus:ring-accent focus:border-accent"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-accent text-card font-bold py-3 rounded-lg hover:bg-orange-500 transition duration-300">
+            Kirim Sekarang (Forward ke WhatsApp) 🚀
+        </button>
+    </form>
+</div>
+                    </div>
+                </div>
+
+                <div id="message-box" class="fixed bottom-8 right-8 w-64 p-4 rounded-lg shadow-2xl z-[1000] hidden transition-opacity duration-300"></div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-card text-white py-8 border-t border-orange-400/20 mt-12">
+        <div class="container mx-auto px-4 md:px-6 text-center text-gray-400">
+            
+            <p class="text-lg font-bold text-accent mb-4">Hubungi Kami</p>
+
+            <div class="flex justify-center space-x-6 mb-6">
+                <a href="https://wa.me/62895417725986" target="_blank" aria-label="WhatsApp" class="transition-colors hover:scale-110">
+                    <img src="logoWhatsApp.png" alt="WhatsApp Logo" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/32x32/4c301e/ffffff?text=IG';">
+                </a>
+
+                <a href="https://www.instagram.com/randzkitchen?igsh=MXdpbTVwZmhwc2UzaQ==" target="_blank" aria-label="Instagram" class="transition-colors hover:scale-110">
+                    <img src="logoinstagram.png" alt="Instagram Logo" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/32x32/4c301e/ffffff?text=IG';">
+                </a>
+                
+                <a href="https://www.facebook.com/share/17NxibJ3iN/" target="_blank" aria-label="Facebook" class="transition-colors hover:scale-110">
+                    <img src="logofb.png" alt="Facebook Logo" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/32x32/4c301e/ffffff?text=FB';">
+                </a>
+                
+                <a href="https://www.tiktok.com/@randzkitchen?_t=ZS-90cimYJDnqT&_r=1" target="_blank" aria-label="TikTok" class="transition-colors hover:scale-110">
+                    <img src="logotiktok.png" alt="TikTok Logo" class="w-8 h-8 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/32x32/4c301e/ffffff?text=TK';">
+                </a>
+            </div>
+            
+            <p class="mb-4 text-sm">&copy; 2024 RanZ.Kitchen. Dibuat dengan semangat. | All Rights Reserved.</p>
+            
+            <div class="mt-4 space-x-4 text-xs">
+                <a href="#" class="hover:text-accent transition-colors">Kebijakan Privasi</a>
+                <a href="#" class="hover:text-accent transition-colors">Syarat Penggunaan</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Routing / Pengaturan Halaman ---
+        const pages = ['home', 'about', 'menu', 'kontak', 'cart']; // Tambahkan 'cart'
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        function updateActiveClass(pageName) {
+            navLinks.forEach(link => {
+                link.classList.remove('text-accent', 'border-b-2', 'border-accent');
+                link.classList.add('border-b-2', 'border-transparent', 'hover:border-accent');
+
+                if (link.getAttribute('data-page') === pageName) {
+                    link.classList.add('text-accent', 'border-b-2', 'border-accent');
+                }
+            });
+        }
+
+        function loadPage(pageName) {
+            pages.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) {
+                    if (id === pageName) {
+                        section.style.display = 'block';
+                        section.classList.add('active-page');
+                        updateActiveClass(pageName);
+                    } else {
+                        section.style.display = 'none';
+                        section.classList.remove('active-page');
+                    }
+                }
+            });
+            // Sembunyikan menu mobile setelah klik
+            mobileMenu.classList.add('hidden');
+        }
+
+        // Handle initial load based on hash
+        const initialPage = window.location.hash.substring(1) || 'home';
+        if (pages.includes(initialPage)) {
+            loadPage(initialPage);
+        } else {
+            loadPage('home');
+        }
+
+        // Handle hash change events
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1);
+            if (pages.includes(hash)) {
+                loadPage(hash);
+            }
+        });
+
+        // Toggle mobile menu
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Menutup mobile menu saat link diklik
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+    </script>
+</body>
+</html>

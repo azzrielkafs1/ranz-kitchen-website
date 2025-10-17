@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RanZ.Kitchen - Premium Food, Harga Bersahabat</title>
+    <title>RandZ.Kitchen - Premium Food, Harga Bersahabat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -62,7 +62,7 @@
             { id: 4, name: "Dimsum Mentai Pedas 16pcs", desc: "Dimsum kukus lembut dengan topping saus mentai pedas khas RanZ. Gurih pedas nikmat!", price: 85000, priceFormatted: "Rp 85.000", img: DIMSUM_MENTAI_IMG_URL, category: "Premium" },
             { id: 5, name: "Macaroni Brulee S", desc: "Macaroni dengan krim keju dan daging sapi panggang. Comfort food terbaik.", price: 25000, priceFormatted: "Rp 25.000", img: MACARONI_IMG_URL, category: "Main Course" },
             { id: 6, name: "Macaroni Brulee M", desc: "Macaroni dengan krim keju dan daging sapi panggang. Comfort food terbaik.", price: 55000, priceFormatted: "Rp 55.000", img: MACARONI_IMG_URL, category: "Main Course" },
-            { id: 7, name: "Kopi Signature", desc: "Perpaduan biji kopi pilihan khas RanZ. Nikmat panas!", price: 15000, priceFormatted: "Rp 15.000", img: KOPI_IMG_URL, category: "Minuman" },
+            { id: 7, name: "Kopi Signature", desc: "Perpaduan biji kopi pilihan khas RandZ. Nikmat panas!", price: 15000, priceFormatted: "Rp 15.000", img: KOPI_IMG_URL, category: "Minuman" },
         ];
 
         // Keranjang Belanja
@@ -221,7 +221,7 @@
 
             // Header
             doc.setFontSize(22);
-            doc.text("RanZ.Kitchen", 105, y, null, null, "center");
+            doc.text("RandZ.Kitchen", 105, y, null, null, "center");
             y += 8;
             doc.setFontSize(10);
             doc.text("Premium Food, Harga Bersahabat", 105, y, null, null, "center");
@@ -263,9 +263,9 @@
 
             // Footer
             doc.setFontSize(10);
-            doc.text("Terima kasih telah berbelanja di RanZ.Kitchen!", 105, y, null, null, "center");
+            doc.text("Terima kasih telah berbelanja di RandZ.Kitchen!", 105, y, null, null, "center");
             
-            doc.save(`Struk_RanZKitchen_${Date.now()}.pdf`);
+            doc.save(`Struk_RandZKitchen_${Date.now()}.pdf`);
         }
 
         function checkout() {
@@ -301,7 +301,7 @@
             { name: "Brownies", img: BROWNIES_IMG_URL, desc: "Brownies Fudgy favorit." },
             { name: "Dimsum Mentai", img: DIMSUM_MENTAI_IMG_URL, desc: "Dimsum dengan saus mentai pedas." },
             { name: "Macaroni Brulee", img: MACARONI_IMG_URL, desc: "Macaroni cheesy terbaik." },
-            { name: "Kopi Signature", img: KOPI_IMG_URL, desc: "Kopi signature RanZ." },
+            { name: "Kopi Signature", img: KOPI_IMG_URL, desc: "Kopi signature RandZ." },
         ];
 
         let currentSlide = 0;
@@ -367,7 +367,7 @@ function forwardToWhatsApp() {
     
     // 4. Buat Isi Pesan (Template)
     // Gunakan karakter \n (backslash n) untuk Baris Baru di JavaScript
-    let whatsappMessage = `*PESANAN BARU* (via RanZ.Kitchen Website)\n\n`;
+    let whatsappMessage = `*PESANAN BARU* (via RandZ.Kitchen Website)\n\n`;
     whatsappMessage += `Halo Rifki Admin RanZ.Kitchen. Saya ingin melakukan pemesanan/menghubungi Anda.\n\n`;
     
     // Detail Kontak
@@ -452,8 +452,8 @@ function forwardToWhatsApp() {
 
     <header class="sticky top-0 z-50 bg-card text-white py-4 shadow-xl border-b border-orange-400/20">
         <div class="container mx-auto flex justify-between items-center px-4 md:px-6">
-            <a href="#home" class="flex items-center space-x-3 group" onclick="loadPage('home')" aria-label="Beranda RanZ Kitchen">
-                <img id="logo-header" src="logo.png" alt="RanZ.Kitchen Logo" 
+            <a href="#home" class="flex items-center space-x-3 group" onclick="loadPage('home')" aria-label="Beranda RandZ Kitchen">
+                <img id="logo-header" src="logo.png" alt="RandZ.Kitchen Logo" 
                      class="w-10 h-10 rounded-full object-cover shadow-lg"
                      onerror="this.onerror=null; this.src='https://placehold.co/40x40/d97706/ffffff?text=R';">
                 <h1 class="text-2xl font-bold tracking-wide group-hover:text-accent transition-colors">RanZ.Kitchen</h1>
@@ -496,7 +496,7 @@ function forwardToWhatsApp() {
         <section id="home" class="page-content min-h-[calc(100vh-80px)] pt-16">
             <div class="grid md:grid-cols-2 gap-12 items-center container mx-auto px-4 md:px-6 py-20">
                 <div class="text-center md:text-left">
-                    <p class="text-lg font-semibold uppercase tracking-widest text-accent mb-3">RanZ.Kitchen</p>
+                    <p class="text-lg font-semibold uppercase tracking-widest text-accent mb-3">RandZ.Kitchen</p>
                     <h1 class="text-6xl md:text-7xl font-black mb-6 leading-tight">
                         Citarasa Premium, <span class="text-accent">Harga Bersahabat.</span>
                     </h1>
@@ -514,7 +514,7 @@ function forwardToWhatsApp() {
             </div>
             
             <div class="container mx-auto px-4 md:px-6 py-16">
-                <h2 class="text-4xl font-black text-center mb-12">Kenapa Memilih RanZ.Kitchen?</h2>
+                <h2 class="text-4xl font-black text-center mb-12">Kenapa Memilih RandZ.Kitchen?</h2>
                 <div class="grid md:grid-cols-3 gap-8 text-center">
                     <div class="bg-card p-8 rounded-xl shadow-xl border border-gray-700/50">
                         <p class="text-5xl mb-4">🏆</p>
@@ -542,9 +542,9 @@ function forwardToWhatsApp() {
                     <img id="logo-hero-about" src="logo.png" alt="RanZ.Kitchen Logo" 
                          class="w-24 h-24 mx-auto mb-6 rounded-full object-cover shadow-2xl border-4 border-accent"
                          onerror="this.onerror=null; this.src='https://placehold.co/96x96/d97706/ffffff?text=LOGO';">
-                    <h1 class="text-5xl md:text-6xl font-black mb-6">Inilah RanZ.Kitchen</h1>
+                    <h1 class="text-5xl md:text-6xl font-black mb-6">Inilah RandZ.Kitchen</h1>
                     <p class="text-xl max-w-3xl mx-auto text-gray-300 font-light leading-relaxed">
-                        RanZ.Kitchen lahir dari semangat dan kolaborasi tugas tiga sahabat. Kini berkembang menjadi usaha kuliner rumahan yang digemari anak muda hingga dewasa.
+                        RandZ.Kitchen lahir dari semangat dan kolaborasi tugas tiga sahabat. Kini berkembang menjadi usaha kuliner rumahan yang digemari anak muda hingga dewasa.
                     </p>
                 </div>
             </div>
@@ -566,7 +566,7 @@ function forwardToWhatsApp() {
                 </section>
 
                 <section class="text-center mb-20">
-                    <h2 class="text-4xl font-black text-white mb-10">Tim Di Balik RanZ.Kitchen</h2>
+                    <h2 class="text-4xl font-black text-white mb-10">Tim Di Balik RandZ.Kitchen</h2>
                     <div id="team-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                         </div>
                 </section>
@@ -707,7 +707,7 @@ function forwardToWhatsApp() {
                 </a>
             </div>
             
-            <p class="mb-4 text-sm">&copy; 2024 RanZ.Kitchen. Dibuat dengan semangat. | All Rights Reserved.</p>
+            <p class="mb-4 text-sm">&copy; 2024 RandZ.Kitchen. Dibuat dengan semangat. | All Rights Reserved.</p>
             
             <div class="mt-4 space-x-4 text-xs">
                 <a href="#" class="hover:text-accent transition-colors">Kebijakan Privasi</a>
